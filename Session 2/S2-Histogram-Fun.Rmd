@@ -1,0 +1,292 @@
+---
+title: "Fun with plots"
+output: html_document
+---
+
+This document walks you through some basic ggplot2 visualization options. This script focuses on histograms, though large portions of the code should be generalizable to other types of plots you might want to create in ggplot2.
+
+A helpful ggplot2 cheat sheet can be found on the R Studio page:
+https://rstudio.com/wp-content/uploads/2015/03/ggplot2-cheatsheet.pdf
+
+A lot of the exercises are based on material available at 
+https://ggplot2.tidyverse.org/index.html and 
+http://www.sthda.com/
+They have been altered and discussed here for the purpose of providing additional practice and having an organized sheet that serves as a useful intro to ggplot2.
+
+
+## Creating a dataset
+
+For these exercises, we will generate our own data with the help of R's random number generator function, set.seed.
+As always, you can read more about it with the help option
+
+```{r}
+?set.seed
+```
+
+First, we are going to create the data. We are going to create a sex and weight variable.
+Feel free to change any values and see how your data changes but try to keep it reasonable values - especially for what you might anticipate weight could be.
+```{r Create Dataset}
+set.seed(127)
+data <- data.frame(
+  sex=factor(rep(c("F", "M"), each=200)),
+  weight=round(c(rnorm(200, mean=55, sd=5), rnorm(200, mean=65, sd=5)))
+  )
+head(data)
+
+```
+
+## Histogram 1: Just the basics
+Let's load the ggplot2 packages and start with some basic options for histograms.
+
+```{r histogram 1}
+library(ggplot2)
+ggplot(data, aes(x=weight)) + geom_histogram()
+
+```
+
+In this example, when we call ggplot2 we first input the name of our dataset (in this case, that's "data") and then specify the aesthetic mappings. Aesthetic mappings take arguments in the  form: aes (x, y ...)
+
+In some of our following exercises we will see different ways we can make use of aes.
+
+## Histogram 2: Changing bin width
+
+In geom_histogram, we can define bindwith. Compare the examples below and try to see how this affects data visualization.
+
+```{r}
+ggplot(data, aes(x=weight)) + 
+  geom_histogram(binwidth=1)
+
+```
+
+```{r}
+ggplot(data, aes(x=weight)) + 
+  geom_histogram(binwidth=5)
+```
+```{r}
+ggplot(data, aes(x=weight)) + 
+  geom_histogram(binwidth=10)
+```
+
+How did increasing bin width alter the histogram? Do you think this was helpful or not? Think of some hypothetical data and situations where it might be helpful and some where it might not.
+
+## Histogram 3: Basic colors
+Try to figure out on your own what the 'color' and 'fill' specifications alter in the following code. 
+
+We will also call this histogram 'hst' so we can later call on it and add on to it directly.
+
+```{r}
+hst <- ggplot(data, aes(x=weight)) + 
+  geom_histogram(color="black", fill="white")
+
+hst
+```
+
+As a hint on color, compare the above histogram with the output from the following code.
+
+```{r}
+ggplot(data, aes(x=weight))+
+  geom_histogram(color="darkblue", fill="lightblue")
+```
+
+## Histogram 3: Adding a mean line
+
+We can add a line for the mean using the function geom_vline.
+
+We could do this in the following way
+
+```{r}
+ggplot(data, aes(x=weight)) + 
+  geom_histogram(color="black", fill="white") +
+  geom_vline(aes(xintercept=mean(weight)),
+            color="blue", linetype="dashed", size=1)
+```
+
+Given that we have already saved our basic histogram, the code above is equivalent to the following shorter option
+
+```{r}
+hst + geom_vline(aes(xintercept=mean(weight)),
+            color="blue", linetype="dashed", size=1)
+```
+
+This should illustrate why it's often helpful to name functions, plots, variables, dataframes - anything we think we might want to use often. Calling it by a name will often be quicker and more secure.
+
+Take a quick look and orient yourself - what do color, linetype, and size specify in this graph?
+
+## Histogram 4: density plot
+
+This should be familiar from our Session 2 worksheet. This time let's try to set fill with a HEX color value.
+
+
+```{r}
+ggplot(data, aes(x=weight)) + 
+ geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#66ffc9") 
+```
+
+What does alpha = .2 do in the code above? You can either look this up or try setting a different value and having a think about it!
+
+```{r}
+ggplot(data, aes(x=weight)) + 
+ geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.7, fill="#66ffc9") 
+```
+
+## Histogram 5: changing colors by group
+If you recall, we have a sex variable that takes two values, F or M. Let's color by sex in the next example.
+
+```{r}
+ggplot(data, aes(x=weight, color=sex)) +
+  geom_histogram(fill="white")
+```
+
+You can probably see that there are overlapping points and that these seems to be stacked together. This is because the default position is indeed "stack". For many functions in R, we don't need to specify the default option, R just assumes it. You can now try specifying the position argument explicitly, with different options such as 'identity' or 'dodge'.
+
+The following code shows the dodge option. Feel free to play around with these options and think when you might want to use one or another.
+
+In addition, we will change the position of the legend to appear on the top side. You can change this to other positions such as, "bottom" or "none" which will put the legend at the bottom or remove it, respectively.
+
+```{r}
+ggplot(data, aes(x=weight, color=sex)) +
+  geom_histogram(fill="white", alpha = .5, position="dodge") +
+  theme(legend.position="top")
+```
+
+## Histogram 6: mean lines for groups
+From our class sessions and everything discussed up to this point, you will likely know how to compute mean values for the weight for each group (M or F) and store those value in a data frame indicating the group each value corresponds to. This might take a few lines of code (try it yourself!) but there are also other ways, such as a quick one-liner with the plyr package as shown below.
+
+
+```{r}
+#install.packages("plyr")
+library(plyr)
+
+groupmeans <- ddply(data, "sex", summarise, grp.mean= mean(weight))
+
+groupmeans
+
+```
+
+Now let's use our familiar geom_vline function to use our groupmeans data. This will add lines for our means in our new histogram which we will call grouphst.
+
+For the sake of comparison with previous histograms, we will use the 'identity' position. Check back with the previous examples to see how this changes how the two groups are "interleaved" together.
+
+```{r}
+grouphst <- ggplot(data, aes(x=weight, color=sex)) +
+  geom_histogram(fill="white", position="identity")+
+  geom_vline(data=groupmeans, aes(xintercept=grp.mean, color=sex),
+             linetype="dashed")+
+  theme(legend.position="top")
+
+grouphst
+```
+
+## Histogram 7: colors for groups
+
+We previously used 'color' and 'fill' to make our histogram pop.
+There are other options to alter the colors of your plot, such as by using your own custom colors (with scale_fill_manual), using predefinied color palettes from the RColorBrewer package (scale_fill_brewer) or if you want to keep it greyscale, then scale_fill_grey() might be just for you.
+
+## Histogram 7.1: greyscale
+
+Let's start with greyscale.
+
+```{r}
+grouphst + scale_color_grey() + theme_classic() +
+  theme(legend.position="top")
+```
+
+## Histogram 7.2: predefined pallette
+
+Now let's try the Brewer package.
+
+```{r}
+grouphst+scale_color_brewer(palette="Dark2")
+```
+
+## Histogram 7.3: manually setting colors
+
+Finally, let's try our hand at picking our own colors.
+One important consideration is that we want our plots to be accessible for everyone, including people with colorblindness or color vision deficiencies. This is generally less of problem when depicting two groups, but is always useful practice.
+
+This blog gives a short discussion and suggestions: https://thenode.biologists.com/data-visualization-with-flying-colors/research/
+
+The HEX values for Tol_bright are: #ee6677, #3f8934, #4477aa, #ccbb44, #66ccee, #aa3977, #bbbbbb
+
+```{r}
+grouphst+scale_color_manual(values=c("#aa3977", "#3f8934", "#4477aa"))
+```
+
+You might be thinking that the difference here is still not very noticeable, since we have only colored the outline of the bars. Let's move on to the next exercise where we can work on using colors to fill in the entire bars.
+
+## Histogram 8: Fill colors
+We can also fill in the colors automatically - based on the levels of sex (F or M).
+
+```{r}
+ggplot(data, aes(x=weight, fill=sex, color=sex)) +
+  geom_histogram(position="identity")
+```
+
+Take a moment to think how you could decrease the transparency of the fill.
+
+You might recall our old friend, alpha. Let's give it a try here.
+
+```{r}
+fillhst <- ggplot(data, aes(x=weight, fill=sex, color=sex)) +
+  geom_histogram(position="identity", alpha=0.5)
+
+fillhst
+
+```
+
+Before looking at the next chunk of code, think how you would add mean lines to this histogram?
+
+Hint: you will geom_vline again, and the groupmeans data.
+
+```{r}
+fillhst + geom_vline(data=groupmeans, aes(xintercept=grp.mean, color=sex),
+             linetype="dashed")
+```
+
+You can also change the plot fill colors in a manner that is analogous to changing the colors. The functions you can use are: scale_fill_manual(), scale_fill_brewer(), and scale_fill_grey().
+
+Experiment with all of this. Sample code for greyscale appears below.
+
+```{r}
+fillhst + scale_color_grey()+scale_fill_grey() +
+  theme_classic()
+```
+
+Here's another sample bit of code with the same values we manually chose in 7.3.
+
+```{r}
+fillhst+scale_color_manual(values=c("#aa3977", "#3f8934", "#4477aa")) +
+  theme_classic()
+```
+
+
+## Histogram 9: Panels
+When we are interested in giving a closer look to each of our groups, it might be a good call to see how facets or panels can help. We do this by adding a facet_grid.
+
+```{r}
+ggplot(data, aes(x=weight))+
+  geom_histogram(color="black", fill="white")+
+  facet_grid(sex ~ .)
+```
+
+As an exercise, you can try altering colors, fill, and adding a mean line for each group.
+
+# Histogram 10: Combining it all together
+In this example, we will refresh our knowledge on adding density plots, mean lines, changing colors, and we will even add some labels!
+
+As you go through the code, try to think of what each funcion and argument do and how they affect the histogram produced at the end.
+
+```{r}
+ggplot(data, aes(x=weight, color=sex, fill=sex)) +
+geom_histogram(aes(y=..density..), position="identity", alpha=0.5)+
+geom_density(alpha=0.6)+
+geom_vline(data=groupmeans, aes(xintercept=grp.mean, color=sex),
+           linetype="dashed")+
+scale_color_manual(values=c("#999999", "#E69F00", "#56B4E9"))+
+scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9"))+
+labs(title="Weight by Sex Histogram Plot",x="Weight(kg)", y = "Density")+
+theme_classic()
+```
+

@@ -1,0 +1,82 @@
+---
+title: "Session 1 Problem Sheet"
+author: "Nikolay Petrov"
+date: "10/10/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Problem 1
+```{r}
+a <- 344
+25 * 13.76 - a
+14^3
+```
+
+
+# Problem 2
+```{r}
+x <‐ c(2, 4, 6, 8, 10)
+y <- c(1, 3, 5, 7, 9, 11)
+
+# 2a)
+x+1
+y*2
+x+y #vector x cannot be recycled properly but default behaviour is to start the shorter vector from beginning
+x*y #ditto
+# 2b)
+length(x)
+length(y)
+# 2c)
+sum(x>5) # number of digits above 5; TRUE = 1
+sum(x[x>5]) # sum all digits above 5
+# 2d)
+y[-3] # exclude 3rd index
+y[x] # use x as indices
+y[y >= 7] # all numbers above 7
+# 2e)
+c(x, y) # combine x and y
+```
+
+# Problem 3
+```{r}
+walkthroughs <- c(159, 214, 199, 219, 200, 165, 179, 175, 144, 201)
+cat("Smallest amount is:", min(walkthroughs), "\n")
+cat("The largest amount is:", max(walkthroughs), "\n")
+cat("The average amount is:", mean(walkthroughs), "\n")
+cat("Difference between smallest and mean:", min(walkthroughs) - mean(walkthroughs), "\n")
+cat("Difference between largest and mean:", max(walkthroughs) - mean(walkthroughs), "\n")
+```
+
+
+# Problem 4
+```{r}
+# a)
+weight <- c(73, 67, 61, 62, 75, 79)
+height <- c(1.87, 1.78, 1.75, 1.70, 1.77, 1.81)
+# b)
+bmi <- weight / (height^2)
+# c)
+cat("Average BMI for PostDocs =", mean(bmi[1:3]), "\n")
+cat("Average BMI for PhDs =", mean(bmi[4:6]))
+# d)
+data <- data.frame(
+  person = seq(1, 6),
+  weight = weight,
+  height = height,
+  BMI = bmi
+)
+# e)
+print("Accessing the data of the person with highest BMI:")
+knitr::kable(unlist(data[6, ]))
+cat("Accessing the BMI of the person with highest BMI -", data[6, 4], "\n")
+cat("Accessing the ID of the person with highest BMI -", data[6, 1], "\n\n")
+print("Verison 2 of accessing the data of the person with highest BMI:") 
+knitr::kable(unlist(data[which.max(data$BMI), ]))
+# f)
+data$person[data$BMI>mean(data$BMI)] #person IDs of the people whose BMI is higher than the mean
+```
+
