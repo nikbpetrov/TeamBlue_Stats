@@ -1,0 +1,161 @@
+---
+title: "Session 2 Solutions Master"
+author: "Team Blue"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output: html_document
+---
+
+# Background
+
+Did the *Been there, done that* section hence **most** of the solutions were mine. Notably, part of the ggplot (using the stat_summary func) was partially not mine, although adapted, and the boxcox procedure was completely new to me.
+
+# Importing relevant libraries
+
+Even if a library is used as a one-off, please add it here.
+
+```{r results = "hide", message = FALSE}
+library(tidyverse) #mandatory
+library(pastecs) #for easy descriptive stats
+library(ggpubr) #useful for cool plots
+library(car) #for levene's test - is there a more parsimonious solution?
+library(gridExtra) #for plot with subplots
+library(MASS) #boxcox procedure
+library(knitr) #for kable
+library(moments) #for skewness func
+```
+
+# 1. Getting data into R
+
+### Solution 1 for importing data: `tidyverse`
+
+The data are provided in space separate values - weirdly enough - and the colnames are offset by 1 such that the 'id' col at the beginning is missing.
+
+```{r message=FALSE, warning=FALSE}
+data <- read_delim("TheDataSet.csv", " ", col_names = c("id", names(read_delim("TheDataSet.csv", " "))),
+                   skip = 1)
+```
+
+### Solution 2: using base `read.csv` function.
+
+```{r}
+data <- read.csv("TheDataSet.csv", sep = " ")
+```
+
+# 2. Exploring the data
+
+Checking the STRucture of the data.
+
+```{r}
+str(data)
+```
+
+Tricky to guess IVs and Dvs as these are design driven but: 
+
+* DVs
+  + key
+  + yes_key
+  + correct
+  + success
+  + rt
+* IVs
+  + text
+  + is_lure
+  + group
+  + old
+
+Let's leave to default column specifications and change as needed.
+
+As I will be using `group` as a grouping variable, let's mutate it to a factor.
+
+```{r}
+data <- data %>%
+  mutate(group = as.factor(group))
+```
+
+And let's now output the descriptive statistics.
+
+First, overall descriptives for `rt`:
+
+```{r}
+knitr::kable(stat.desc(data$rt))
+```
+
+Descriptive stats by `group` (levels = 0/1):
+
+```{r}
+knitr::kable(unlist(by(data$rt, data$group, stat.desc))) #maybe split column and prettify
+```
+
+# 3. Plotting
+
+Not the prettiest of graphs, but does the job. Possible to prettify.
+
+### Boxplots
+
+```{r}
+ggplot(data, aes(y=rt, x=group)) +
+  geom_boxplot()
+```
+
+### Barplots with errorbars
+
+```{r}
+ggplot(data, aes(y=rt, x=group)) +
+  stat_summary(fun = "mean", geom = "bar", position = position_dodge()) +
+  stat_summary(fun.data = "mean_se", geom = "errorbar", position = position_dodge(width = 0.4),
+               width = 0.2)
+```
+
+# 4. Assumption checks
+
+### Normality plot
+
+```{r}
+ggpubr::ggqqplot(data$rt)
+```
+
+### Shaprio-Wilk test
+
+```{r}
+shapiro.test(data$rt)
+```
+
+### Homogeneity of variance tests
+
+Bartlett's test:
+
+```{r}
+bartlett.test(formula = rt ~ group, data = data)
+```
+
+Levene's test:
+
+```{r}
+leveneTest(rt ~ group, data = data)
+```
+
+Bartlett's is significant, while Levene's is not. Possible reason is that Bartlett's test is more sensitive to violation of normality; Levene's is a bit more robust. See [here](https://stats.stackexchange.com/a/135235) for more information.
+
+### Transformations
+
+Before applying any transformations, we first need to check the skewness of the data as negative skew requires inversion. See [this tutorial](https://www.datanovia.com/en/lessons/transform-data-to-normal-distribution-in-r/#transformation-methods) for more information.
+
+In this case the skewness of the data is `r moments::skewness(data$rt)`.
+
+Let's now plot what different transformations do to the normality of our data.
+
+```{r}
+plot1 <- ggqqplot(data$rt, title = "Original")
+plot2 <- ggqqplot(log(data$rt), title = "Log transformed")
+plot3 <- ggqqplot(sqrt(data$rt), title = "Square root transformation")
+plot4 <- ggqqplot(1/data$rt, title = "Inverse")
+grid.arrange(plot1, plot2, plot3, plot4, ncol=2)
+```
+
+The inverse transformations seems most appropriate from the graph above. To confirm, let's use the Box-Cox procedure.
+
+```{r}
+lambdaList <- boxcox(rt~group, data=data)
+```
+
+In this case the lambda value is `r (lambda <- lambdaList$x[which.max(lambdaList$y)])`. Based on the criteria given [here](https://www.isixsigma.com/tools-templates/normality/making-data-normal-using-box-cox-power-transformation/), our conclusions converge that the most effective transformation would be the inverse one.
