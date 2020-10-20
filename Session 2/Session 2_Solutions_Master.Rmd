@@ -35,7 +35,25 @@ data <- read_delim("TheDataSet.csv", " ", col_names = c("id", names(read_delim("
                    skip = 1)
 ```
 
-### Solution 2: using base `read.csv` function.
+### Solution 2: using the `read.table` function
+
+```{r}
+data <- read.table("TheDataSet.csv", sep = " ", header = TRUE)
+```
+
+**Note**
+
+So, the `read.table` (as well as the `data.frame`) function have a default argument for how to handle character vectors (see [here](https://www.rdocumentation.org/packages/utils/versions/3.6.2/topics/read.table) or `??read.table` in `R`). The argument is `stringsAsFactors` and has a default value as `default.stringsAsFactors()`. This default value (`default.stringsAsFactors()`) is a function that then calls the default `R` options set on your environment (you can see all options if you type `options()`).
+
+To check the value of the `stringsAsFactors` global option, simply type `options("stringsAsFactors")`. If `FALSE` appears, that means that the `read.table` function will output the character vectors as character, not factors. If `stringsAsFactors` is set to `TRUE`, then you will be seeing factors, not characters.
+
+Why this discrepancy between R session in this argument? Apparently there has been a bit of controversy around the issue but after a meeting in 2019 from the R team, it has been decided that this global option will now be deprecated as of R 4.0.0 and above (see [here](https://developer.r-project.org/Blog/public/2020/02/16/stringsasfactors/)). Hence, I would perhaps not rely on this.
+
+Best practice, I guess, is that we define the type of each column when we import data (within whichever function we use) to avoid relying on system-specific variables.
+
+In any case, some people might have different values to that global option, hence the discrepancies above. The `tidyverse` funcs (`read_csv`) and the base `read.csv` func do not seem to suffer from the same problem but let me know if you encounter anything weird.
+
+### Solution 3: using base `read.csv` function.
 
 ```{r}
 data <- read.csv("TheDataSet.csv", sep = " ")
