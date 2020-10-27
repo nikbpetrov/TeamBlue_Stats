@@ -1,0 +1,31 @@
+---
+title: "Session 3_Solution_Nikolay Petrov"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output: html_document
+---
+
+```{r}
+set.seed(33)
+```
+
+
+```{r}
+exemplars_per_type <- 100
+power_sd <- 5
+prevalence_sd <- 50
+pokemon_data <- data.frame(
+  type        = rep(c("Salamence", "Onix", "Psychic"), each = exemplars_per_type),
+  power       = c(rnorm(exemplars_per_type, mean = 20, sd = power_sd), 
+                  rnorm(exemplars_per_type, mean = 50, sd = power_sd),
+                  rnorm(exemplars_per_type, mean = 70, sd = power_sd)),
+  prevalence  = c(rnorm(exemplars_per_type, mean = 200, sd = prevalence_sd), 
+                  rnorm(exemplars_per_type, mean = 500, sd = prevalence_sd),
+                  rnorm(exemplars_per_type, mean = 700, sd = prevalence_sd))
+)
+```
+
+```{r}
+pokemon_data %>%
+  select(-type)
+```
+
